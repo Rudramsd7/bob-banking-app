@@ -1,6 +1,6 @@
 from flask import Blueprint, request, redirect, url_for, session, flash
 
-from services.account_service import deposit, withdraw
+from services.account_service import deposit, withdraw, get_balance
 
 transactions_bp = Blueprint("transactions", __name__)
 
@@ -41,6 +41,18 @@ def withdraw_funds():
 
     customer_id = session["customer_id"]
     raw_amount = request.form.get("amount", "")
+
+    if not raw_amount:
+        flash("Amount is required", "error")
+        return redirect(url_for("dashboard.dashboard_page"))
+
+    if not float(raw_amount) > 0:
+        flash("Amount must be greater than zero", "error")
+        return redirect(url_for("dashboard.dashboard_page"))
+
+    if float(raw_amount) > get_balance(customer_id):
+        flash("Insufficient funds", "error")
+        return redirect(url_for("dashboard.dashboard_page"))
 
     success, message = withdraw(customer_id, raw_amount)
 
